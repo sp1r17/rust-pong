@@ -2,7 +2,7 @@ use bevy::{
     // app::AppExit,
     prelude::*,
     sprite::collide_aabb::{collide, Collision},
-    // window::PresentMode,
+    window::PresentMode,
 };
 
 const WINDOW_WIDTH: f32 = 1280.0;
@@ -32,7 +32,7 @@ pub struct RightPaddle;
 #[derive(Component)]
 pub struct Ball;
 
-#[derive(Component, Deref, DerefMut)]
+#[derive(Component, Deref, DerefMut, Debug)]
 struct Velocity(Vec2);
 
 #[derive(Component)]
@@ -53,9 +53,10 @@ struct WallBundle {
     collider: Collider,
 }
 
+#[derive(Component)]
 enum WallLocation {
-    Left,
-    Right,
+    // Left,
+    // Right,
     Bottom,
     Top,
 }
@@ -63,8 +64,8 @@ enum WallLocation {
 impl WallLocation {
     fn position(&self) -> Vec2 {
         match self {
-            WallLocation::Left => Vec2::new(LEFT_WALL, 0.0),
-            WallLocation::Right => Vec2::new(RIGHT_WALL, 0.0),
+            // WallLocation::Left => Vec2::new(LEFT_WALL, 0.0),
+            // WallLocation::Right => Vec2::new(RIGHT_WALL, 0.0),
             WallLocation::Bottom => Vec2::new(0.0, BOTTOM_WALL),
             WallLocation::Top => Vec2::new(0.0, TOP_WALL),
         }
@@ -77,9 +78,9 @@ impl WallLocation {
         assert!(arena_width > 0.0);
 
         match self {
-            WallLocation::Left | WallLocation::Right => {
-                Vec2::new(WALL_THICKNESS, arena_height + WALL_THICKNESS)
-            }
+            // WallLocation::Left | WallLocation::Right => {
+            //     Vec2::new(WALL_THICKNESS, arena_height + WALL_THICKNESS)
+            // }
             WallLocation::Bottom | WallLocation::Top => {
                 Vec2::new(arena_width + WALL_THICKNESS, WALL_THICKNESS)
             }
@@ -109,6 +110,10 @@ fn main() {
         .insert_resource(ClearColor(Color::BLACK))
         // Cap tick rate
         .insert_resource(FixedTime::new_from_secs(1.0 / 60.0))
+        .insert_resource(Scoreboard {
+            left_player_score: 0,
+            right_player_score: 0,
+        })
         .add_event::<CollisionEvent>()
         .add_plugins(
             DefaultPlugins.set(WindowPlugin {
@@ -120,7 +125,7 @@ fn main() {
                     canvas: Some("#bevy".to_owned()),
                     // Tells wasm not to override default event handling, like F5 and Ctrl+R
                     prevent_default_event_handling: false,
-                    // present_mode: PresentMode::AutoNoVsync,
+                    present_mode: PresentMode::AutoNoVsync,
                     ..default()
                 }),
                 ..default()
@@ -141,7 +146,14 @@ fn main() {
                     .after(apply_velocity),
             ),
         )
-        .add_systems(Update, bevy::window::close_on_esc)
+        .add_systems(
+            Update,
+            (
+                bevy::window::close_on_esc,
+                check_if_ball_on_screen,
+                update_scoreboard,
+            ),
+        )
         .run();
 }
 
@@ -232,8 +244,8 @@ fn init(mut commands: Commands, _asset_server: Res<AssetServer>) {
     );
 
     // Walls
-    commands.spawn(WallBundle::new(WallLocation::Left));
-    commands.spawn(WallBundle::new(WallLocation::Right));
+    // commands.spawn(WallBundle::new(WallLocation::Left));
+    // commands.spawn(WallBundle::new(WallLocation::Right));
     commands.spawn(WallBundle::new(WallLocation::Bottom));
     commands.spawn(WallBundle::new(WallLocation::Top));
 }
@@ -297,9 +309,17 @@ fn apply_velocity(mut query: Query<(&mut Transform, &mut Velocity)>, time_step: 
     }
 }
 
+fn update_scoreboard(scoreboard: Res<Scoreboard>, mut query: Query<&mut Text>) {
+    let mut text = query.single_mut();
+    text.sections[0].value = String::from(
+        scoreboard.left_player_score.to_string()
+            + " : "
+            + &scoreboard.right_player_score.to_string(),
+    );
+}
+
 fn check_for_collisions(
     // mut commands: Commands,
-    // mut scoreboard: ResMut<Scoreboard>,
     mut ball_query: Query<(&mut Velocity, &Transform), With<Ball>>,
     collider_query: Query<(Entity, &Transform), With<Collider>>,
     mut collision_events: EventWriter<CollisionEvent>,
@@ -336,5 +356,21 @@ fn check_for_collisions(
                 ball_velocity.y = -ball_velocity.y;
             }
         }
+    }
+}
+
+fn check_if_ball_on_screen(
+    mut scoreboard: ResMut<Scoreboard>,
+    mut ball_query: Query<&mut Transform, With<Ball>>,
+) {
+    let mut ball_transform = ball_query.single_mut();
+    let ball_size = ball_transform.scale.truncate();
+
+    if ball_transform.translation.x + ball_size.x / 2.0 > WINDOW_WIDTH / 2.0 {
+        ball_transform.translation = BALL_STARTING_POSITION;
+        scoreboard.left_player_score += 1;
+    } else if ball_transform.translation.x - ball_size.x / 2.0 < -WINDOW_WIDTH / 2.0 {
+        ball_transform.translation = BALL_STARTING_POSITION;
+        scoreboard.right_player_score += 1;
     }
 }
