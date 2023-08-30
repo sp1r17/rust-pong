@@ -311,11 +311,9 @@ fn apply_velocity(mut query: Query<(&mut Transform, &mut Velocity)>, time_step: 
 
 fn update_scoreboard(scoreboard: Res<Scoreboard>, mut query: Query<&mut Text>) {
     let mut text = query.single_mut();
-    text.sections[0].value = String::from(
-        scoreboard.left_player_score.to_string()
-            + " : "
-            + &scoreboard.right_player_score.to_string(),
-    );
+    text.sections[0].value = scoreboard.left_player_score.to_string()
+        + " : "
+        + &scoreboard.right_player_score.to_string();
 }
 
 fn check_for_collisions(
