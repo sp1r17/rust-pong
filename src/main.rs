@@ -2,7 +2,7 @@ use bevy::{
     // app::AppExit,
     prelude::*,
     sprite::collide_aabb::{collide, Collision},
-    window::PresentMode,
+    // window::PresentMode,
 };
 
 const WINDOW_WIDTH: f32 = 1280.0;
@@ -120,7 +120,7 @@ fn main() {
                     canvas: Some("#bevy".to_owned()),
                     // Tells wasm not to override default event handling, like F5 and Ctrl+R
                     prevent_default_event_handling: false,
-                    present_mode: PresentMode::AutoNoVsync,
+                    // present_mode: PresentMode::AutoNoVsync,
                     ..default()
                 }),
                 ..default()
