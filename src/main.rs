@@ -14,7 +14,7 @@ const PADDLE_PADDING: f32 = 20.0;
 
 const BALL_STARTING_POSITION: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 const BALL_SIZE: Vec3 = Vec3::new(20.0, 20.0, 0.0);
-const BALL_SPEED: f32 = 300.0;
+const BALL_SPEED: f32 = 500.0;
 const INITIAL_BALL_DIRECTION: Vec2 = Vec2::new(0.5, -0.5);
 
 const WALL_THICKNESS: f32 = 10.0;
